@@ -16,12 +16,15 @@ def handle_client(conn, addr):
 
     connected = True
     while connected:
-        msg_length = int(conn.recv(HEADER).decode(FORMAT))
-        msg = conn.recv(msg_length).decode(FORMAT)
-        print(f"{addr} {msg}")
+        msg_length = conn.recv(HEADER).decode(FORMAT)
+        if msg_length:
+            msg_length = int(msg_length)
+            msg = conn.recv(msg_length).decode(FORMAT)
+            print(f"{addr} {msg}")
+            conn.send("Message received".encode(FORMAT))
 
-        if msg == DISCONNECT_MESSAGE:
-            connected = False
+            if msg == DISCONNECT_MESSAGE:
+                connected = False
 
     conn.close()
 
@@ -29,7 +32,9 @@ def start():
     server.listen()
     print(f"[LISTENING] Server is listening on {SERVER}")
     while True:
-        conn, addr = server.accept() #returns tuple of socket object, TCP/IP address
+        conn, addr = server.accept()
+        #conn is a new socket object usable to send and receive data on the connection, 
+        #address is the address bound to the socket on the other end of the connection.
         thread = threading.Thread(target=handle_client, args=(conn,addr))
         thread.start()
         print(f"[ACTIVE CONNECTIONS] {threading.activeCount() - 1}") #one thread already active 
